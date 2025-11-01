@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TrainingModule, ProgressStats, Certification } from '@/types/training';
 import { trainingModules, certifications } from '@/data/trainingData';
 
@@ -13,11 +13,7 @@ export function useTrainingData() {
     upcomingDue: 0,
   });
 
-  useEffect(() => {
-    calculateStats();
-  }, [modules]);
-
-  const calculateStats = () => {
+  const calculateStats = useCallback(() => {
     const total = modules.length;
     const completed = modules.filter(m => m.completed).length;
     const scores = modules.filter(m => m.score).map(m => m.score!);
@@ -39,7 +35,11 @@ export function useTrainingData() {
       averageScore: avgScore,
       upcomingDue: upcoming,
     });
-  };
+  }, [modules]);
+
+  useEffect(() => {
+    calculateStats();
+  }, [calculateStats]);
 
   const completeModule = (moduleId: string, score: number) => {
     setModules(prevModules =>
