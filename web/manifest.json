@@ -1,0 +1,28 @@
+
+{
+  "name": "Natively - NICU RT Training",
+  "short_name": "Natively",
+  "description": "Track your education and certifications as a respiratory therapist in a neonatal intensive care unit.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "icons": [
+    {
+      "src": "/assets/images/final_quest_240x240.png",
+      "sizes": "240x240",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/images/natively-dark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "medical", "productivity"],
+  "lang": "en-US",
+  "dir": "ltr"
+}
