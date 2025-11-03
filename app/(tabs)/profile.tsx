@@ -1,125 +1,127 @@
 
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { Stack } from 'expo-router';
-import { IconSymbol } from '@/components/IconSymbol';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Button, FlatList, Alert } from 'react-native';
+import { Stack, router } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
-import { useTrainingData } from '@/hooks/useTrainingData';
-import CertificationCard from '@/components/CertificationCard';
-import StatCard from '@/components/StatCard';
+import AuthForm from '@/components/AuthForm';
+import { onAuthStateChange, logout } from '@/services/auth';
+import { getUser, addCourseToUser, removeCourseFromUser } from '@/services/user';
+import { seedDatabase } from '@/services/training';
+import trainingData from '@/data/training.json';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/services/firebase';
 
 export default function ProfileScreen() {
-  const { stats, certifications, modules } = useTrainingData();
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [users, setUsers] = useState([]);
 
-  const completedModules = modules.filter(m => m.completed);
-  const recentlyCompleted = completedModules
-    .sort((a, b) => {
-      if (!a.completedDate || !b.completedDate) return 0;
-      return new Date(b.completedDate).getTime() - new Date(a.completedDate).getTime();
-    })
-    .slice(0, 3);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChange(async (user) => {
+      if (user) {
+        const userData = await getUser(user.uid);
+        setUser(user);
+        setIsAdmin(userData?.isAdmin || false);
+        if (userData?.isAdmin) {
+          fetchAllUsers();
+        }
+      } else {
+        setUser(null);
+        setIsAdmin(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const fetchAllUsers = async () => {
+    const usersCollection = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersCollection);
+    const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setUsers(usersList);
+  };
+
+  const handleSeedDatabase = async () => {
+    try {
+      await seedDatabase(trainingData);
+      Alert.alert('Success', 'Database seeded successfully!');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to seed database. It may already be seeded.');
+      console.error(error);
+    }
+  };
+
+  const handleUserPress = (selectedUser) => {
+    if (isAdmin) {
+      // Navigate to a new screen to manage user courses
+      router.push(`/admin/manage-courses?userId=${selectedUser.id}`);
+    }
+  };
+
+  if (!user) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: isLogin ? 'Login' : 'Register',
+            headerStyle: { backgroundColor: colors.card },
+            headerTintColor: colors.text,
+          }}
+        />
+        <View style={styles.authContainer}>
+          <AuthForm isLogin={isLogin} />
+          <Button 
+            title={isLogin ? 'Create an account' : 'Already have an account?'}
+            onPress={() => setIsLogin(!isLogin)}
+            color={colors.primary}
+          />
+        </View>
+      </>
+    );
+  }
 
   return (
     <>
       <Stack.Screen
         options={{
           title: 'My Profile',
-          headerStyle: {
-            backgroundColor: colors.card,
-          },
+          headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,
         }}
       />
-      <ScrollView 
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.avatarContainer}>
-            <IconSymbol name="person.circle.fill" size={80} color={colors.accent} />
-          </View>
-          <Text style={styles.name}>Respiratory Therapist</Text>
-          <Text style={styles.role}>NICU Department</Text>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Welcome, {user.email}</Text>
+          <Button title="Logout" onPress={logout} color={colors.error} />
         </View>
-
-        {/* Stats Overview */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Overview</Text>
-          <View style={styles.statsGrid}>
-            <StatCard
-              icon="book.fill"
-              value={stats.completedModules}
-              label="Completed"
-              color={colors.success}
-            />
-            <StatCard
-              icon="clock.fill"
-              value={stats.totalModules - stats.completedModules}
-              label="Remaining"
-              color={colors.accent}
-            />
-          </View>
-          <View style={styles.statsGrid}>
-            <StatCard
-              icon="star.fill"
-              value={stats.averageScore > 0 ? `${stats.averageScore}%` : 'N/A'}
-              label="Avg Score"
-              color={colors.warning}
-            />
-            <StatCard
-              icon="calendar"
-              value={stats.upcomingDue}
-              label="Due Soon"
-              color={colors.error}
-            />
-          </View>
-        </View>
-
-        {/* Certifications */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Certifications</Text>
-          {certifications.map(cert => (
-            <CertificationCard key={cert.id} certification={cert} />
-          ))}
-        </View>
-
-        {/* Recently Completed */}
-        {recentlyCompleted.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recently Completed</Text>
-            {recentlyCompleted.map(module => (
-              <View key={module.id} style={styles.completedItem}>
-                <View style={styles.completedIcon}>
-                  <IconSymbol name="checkmark.circle.fill" size={24} color={colors.success} />
+        
+        {isAdmin && (
+          <View style={styles.adminSection}>
+            <Text style={styles.adminTitle}>Admin Tools</Text>
+            <View style={styles.adminActions}>
+              <Button title="Seed Database" onPress={handleSeedDatabase} color={colors.primary} />
+            </View>
+            
+            <Text style={styles.userListTitle}>Manage User Courses</Text>
+            <FlatList
+              data={users}
+              keyExtractor={item => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.userItemContainer}>
+                  <Text style={styles.userEmail}>{item.email}</Text>
+                  <Button 
+                    title="Manage" 
+                    onPress={() => handleUserPress(item)} 
+                    color={colors.accent}
+                  />
                 </View>
-                <View style={styles.completedContent}>
-                  <Text style={styles.completedTitle}>{module.title}</Text>
-                  <View style={styles.completedMeta}>
-                    <Text style={styles.completedDate}>
-                      {module.completedDate && new Date(module.completedDate).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </Text>
-                    {module.score && (
-                      <>
-                        <Text style={styles.completedDot}>•</Text>
-                        <Text style={styles.completedScore}>Score: {module.score}%</Text>
-                      </>
-                    )}
-                  </View>
-                </View>
-              </View>
-            ))}
+              )}
+              style={styles.userList}
+            />
           </View>
         )}
 
-        {/* Bottom Padding for Tab Bar */}
-        <View style={styles.bottomPadding} />
-      </ScrollView>
+      </View>
     </>
   );
 }
@@ -127,88 +129,60 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
     backgroundColor: colors.background,
   },
-  contentContainer: {
+  authContainer: {
+    flex: 1,
+    justifyContent: 'center',
     padding: 16,
+    backgroundColor: colors.background,
   },
-  profileHeader: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 24,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
-    elevation: 2,
   },
-  avatarContainer: {
-    marginBottom: 12,
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  role: {
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
+  title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 12,
   },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  completedItem: {
+  adminSection: {
+    marginTop: 20,
+    padding: 16,
     backgroundColor: colors.card,
     borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.08)',
-    elevation: 2,
   },
-  completedIcon: {
-    marginRight: 12,
-  },
-  completedContent: {
-    flex: 1,
-  },
-  completedTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+  adminTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 16,
   },
-  completedMeta: {
+  adminActions: {
+    marginBottom: 24,
+  },
+  userListTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  userList: {
+    maxHeight: 300,
+  },
+  userItemContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 6,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  completedDate: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  completedDot: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  completedScore: {
-    fontSize: 13,
-    color: colors.success,
-    fontWeight: '600',
-  },
-  bottomPadding: {
-    height: 100,
+  userEmail: {
+    fontSize: 16,
+    color: colors.text,
   },
 });

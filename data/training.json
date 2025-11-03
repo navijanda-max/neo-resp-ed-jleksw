@@ -1,0 +1,60 @@
+{
+  "modules": [
+    {
+      "id": 1,
+      "title": "Introduction to NICU Ventilators",
+      "category": "Mechanical Ventilation",
+      "type": "e-learning",
+      "duration": "60 mins",
+      "completed": true,
+      "dueDate": null,
+      "score": 95,
+      "completedDate": "2023-04-15"
+    },
+    {
+      "id": 2,
+      "title": "Advanced Ventilator Waveform Analysis",
+      "category": "Mechanical Ventilation",
+      "type": "simulation",
+      "duration": "90 mins",
+      "completed": false,
+      "dueDate": "2024-07-20",
+      "score": null,
+      "completedDate": null
+    },
+    {
+      "id": 3,
+      "title": "Neonatal Resuscitation Program (NRP) Update",
+      "category": "Certifications",
+      "type": "workshop",
+      "duration": "4 hours",
+      "completed": true,
+      "dueDate": null,
+      "score": 100,
+      "completedDate": "2023-01-20"
+    }
+  ],
+  "certifications": [
+    {
+      "id": 1,
+      "name": "Neonatal Resuscitation Program (NRP)",
+      "issuedBy": "American Academy of Pediatrics",
+      "validUntil": "2025-01-19",
+      "status": "Active"
+    },
+    {
+      "id": 2,
+      "name": "Registered Respiratory Therapist (RRT)",
+      "issuedBy": "NBRC",
+      "validUntil": "2026-06-30",
+      "status": "Active"
+    },
+    {
+      "id": 3,
+      "name": "Advanced Cardiovascular Life Support (ACLS)",
+      "issuedBy": "American Heart Association",
+      "validUntil": "2024-08-15",
+      "status": "Renewal Due"
+    }
+  ]
+}
