@@ -1,36 +1,21 @@
 
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from './firebase';
 
-export const createUser = (uid, email, isAdmin = false) => {
-  return setDoc(doc(db, "users", uid), {
-    email,
-    isAdmin,
-    courses: []
-  });
+export const getUserProfile = async (userId) => {
+  const docRef = doc(db, 'users', userId);
+  const docSnap = await getDoc(docRef);
+  return docSnap.exists() ? docSnap.data() : null;
 };
 
-export const getUser = async (uid) => {
-  const userDoc = await getDoc(doc(db, "users", uid));
-  return userDoc.exists() ? userDoc.data() : null;
+export const updateUserProfile = async (userId, data) => {
+  const docRef = doc(db, 'users', userId);
+  await setDoc(docRef, data, { merge: true });
 };
 
-export const updateUserCourses = (uid, courses) => {
-  return updateDoc(doc(db, "users", uid), { courses });
-};
-
-export const addCourseToUser = (uid, course) => {
-  return updateDoc(doc(db, "users", uid), {
-    courses: arrayUnion(course)
-  });
-};
-
-export const removeCourseFromUser = (uid, course) => {
-  return updateDoc(doc(db, "users", uid), {
-    courses: arrayRemove(course)
-  });
-};
-
-export const setUserAdmin = (uid, isAdmin) => {
-  return updateDoc(doc(db, "users", uid), { isAdmin });
+export const getAllUsers = async () => {
+  const usersCollection = collection(db, 'users');
+  const usersSnapshot = await getDocs(usersCollection);
+  const userList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return userList;
 };
