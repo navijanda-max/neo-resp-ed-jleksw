@@ -26,6 +26,12 @@ export default function TabLayout() {
       icon: 'person.fill',
       label: 'Profile',
     },
+    {
+      name: 'admin',
+      route: '/(tabs)/admin',
+      icon: 'lock.fill',
+      label: 'Admin',
+    },
   ];
 
   if (Platform.OS === 'ios') {
@@ -43,6 +49,10 @@ export default function TabLayout() {
           <Icon sf="person.fill" drawable="ic_profile" />
           <Label>Profile</Label>
         </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="admin">
+          <Icon sf="lock.fill" drawable="ic_lock" />
+          <Label>Admin</Label>
+        </NativeTabs.Trigger>
       </NativeTabs>
     );
   }
@@ -58,6 +68,8 @@ export default function TabLayout() {
         <Stack.Screen name="(home)" />
         <Stack.Screen name="training" />
         <Stack.Screen name="profile" />
+        <Stack.Screen name="admin" />
+        <Stack.Screen name="manage-courses" />
       </Stack>
       <FloatingTabBar tabs={tabs} />
     </>

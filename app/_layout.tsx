@@ -1,3 +1,4 @@
+
 import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
@@ -79,7 +80,7 @@ export default function RootLayout() {
   };
   return (
     <>
-      <StatusBar style="auto" animated />
+      <StatusBar style={"auto"} animated />
         <ThemeProvider
           value={colorScheme === "dark" ? CustomDarkTheme : CustomDefaultTheme}
         >
