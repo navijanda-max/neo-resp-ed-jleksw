@@ -33,7 +33,7 @@ export default function AdminScreen() {
           renderItem={({ item }) => (
             <View style={styles.userItem}>
               <Text style={styles.userEmail}>{item.email}</Text>
-              <Link href={`/admin/manage-courses?userId=${item.id}`} asChild>
+              <Link href={`/manage-courses?userId=${item.id}`} asChild>
                 <TouchableOpacity style={styles.button}>
                   <Text style={styles.buttonText}>Manage Courses</Text>
                 </TouchableOpacity>
